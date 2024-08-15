@@ -8,6 +8,7 @@
             {
                 return string.Empty;
             }
+
             var indexOfQueryString = url.IndexOf('?', StringComparison.Ordinal);
             return (indexOfQueryString == -1)
                 ? url

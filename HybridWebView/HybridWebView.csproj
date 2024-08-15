@@ -1,14 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFrameworks>net8.0;net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
-		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
-		<!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
-		<UseMaui>true</UseMaui>
-		<SingleProject>true</SingleProject>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
+    <PropertyGroup>
+        <TargetFrameworks>net8.0-android;net8.0-windows10.0.19041.0</TargetFrameworks>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">$(TargetFrameworks);net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
+        <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
+        <!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
+        <UseMaui>true</UseMaui>
+        <SingleProject>true</SingleProject>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
@@ -18,50 +19,50 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<None Remove="KnownStaticFiles\HybridWebView.js" />
-	</ItemGroup>
+    <ItemGroup>
+        <None Remove="KnownStaticFiles\HybridWebView.js" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<EmbeddedResource Include="KnownStaticFiles\HybridWebView.js" />
-	</ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="KnownStaticFiles\HybridWebView.js" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<None Include="..\README.md" Pack="true" PackagePath="\"/>
-	</ItemGroup>
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
-	<PropertyGroup>
-		<!-- Change these two values to control the version -->
-		<VersionMain>1.0.0</VersionMain>
-		<VersionPrelease>-preview7</VersionPrelease>
-	</PropertyGroup>
+    <PropertyGroup>
+        <!-- Change these two values to control the version -->
+        <VersionMain>1.0.0</VersionMain>
+        <VersionPrelease>-onwd</VersionPrelease>
+    </PropertyGroup>
 
-	<PropertyGroup>
-		<Version>$(VersionMain)</Version>
-		<AssemblyVersion>$(VersionMain)</AssemblyVersion>
-		<FileVersion>$(VersionMain)</FileVersion>
+    <PropertyGroup>
+        <Version>$(VersionMain)</Version>
+        <AssemblyVersion>$(VersionMain)</AssemblyVersion>
+        <FileVersion>$(VersionMain)</FileVersion>
 
-		<PackageId>EJL.MauiHybridWebView</PackageId>
-		<Description>A HybridWebView control for .NET MAUI that enables embedding web UI (HTML/JS/CSS) in cross-platform native apps.</Description>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Authors>Eilon Lipton</Authors>
-		<NeutralLanguage>en</NeutralLanguage>
-		<RepositoryUrl>https://github.com/Eilon/MauiCSharpInteropWebView.git</RepositoryUrl>
-		<PackageProjectUrl>https://github.com/Eilon/MauiCSharpInteropWebView</PackageProjectUrl>
-		<PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
-		<Copyright>© 2024 Eilon Lipton</Copyright>
-		<PackageVersion>$(VersionMain)$(VersionPrelease)</PackageVersion>
-		<PackageOutputPath>$(MSBuildThisFileDirectory)..\artifacts</PackageOutputPath>
-		<LicenseFile>$(MSBuildThisFileDirectory)..\LICENSE</LicenseFile>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageId>EJL.MauiHybridWebView</PackageId>
+        <Description>A HybridWebView control for .NET MAUI that enables embedding web UI (HTML/JS/CSS) in cross-platform native apps.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Authors>Eilon Lipton</Authors>
+        <NeutralLanguage>en</NeutralLanguage>
+        <RepositoryUrl>https://github.com/Eilon/MauiCSharpInteropWebView.git</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/Eilon/MauiCSharpInteropWebView</PackageProjectUrl>
+        <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+        <Copyright>© 2024 Eilon Lipton</Copyright>
+        <PackageVersion>$(VersionMain)$(VersionPrelease)</PackageVersion>
+        <PackageOutputPath>$(MSBuildThisFileDirectory)..\artifacts</PackageOutputPath>
+        <LicenseFile>$(MSBuildThisFileDirectory)..\LICENSE</LicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
 
-		<IncludeSymbols>true</IncludeSymbols>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	</PropertyGroup>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)"/>
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
+    </ItemGroup>
 
 </Project>

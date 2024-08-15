@@ -1,5 +1,4 @@
 ﻿using Android.Webkit;
-using Java.Time;
 using Microsoft.Maui.Platform;
 using System.Text;
 using AWebView = Android.Webkit.WebView;
@@ -14,12 +13,14 @@ namespace HybridWebView
         {
             _handler = handler;
         }
+
         public override WebResourceResponse? ShouldInterceptRequest(AWebView? view, IWebResourceRequest? request)
         {
             var fullUrl = request?.Url?.ToString();
             var requestUri = QueryStringHelper.RemovePossibleQueryString(fullUrl);
 
             var webView = (HybridWebView)_handler.VirtualView;
+
 
             if (new Uri(requestUri) is Uri uri && HybridWebView.AppOriginUri.IsBaseOf(uri))
             {
@@ -68,7 +69,7 @@ namespace HybridWebView
                 if (contentStream is null)
                 {
                     var assetPath = Path.Combine(((HybridWebView)_handler.VirtualView).HybridAssetRoot!, relativePath!);
-                    contentStream = PlatformOpenAppPackageFile(assetPath);
+                    contentStream = PlatformOpenAppPackageFile(assetPath); // GetAssetStreamAsync(assetPath);//
                 }
 
                 if (contentStream is null)
@@ -78,12 +79,14 @@ namespace HybridWebView
                     var notFoundByteArray = Encoding.UTF8.GetBytes(notFoundContent);
                     var notFoundContentStream = new MemoryStream(notFoundByteArray);
 
-                    return new WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", GetHeaders("text/plain"), notFoundContentStream);
+                    return new WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", GetHeaders("text/plain"),
+                        notFoundContentStream);
                 }
                 else
                 {
                     // TODO: We don't know the content length because Android doesn't tell us. Seems to work without it!
-                    return new WebResourceResponse(contentType, "UTF-8", 200, "OK", GetHeaders(contentType), contentStream);
+                    return new WebResourceResponse(contentType, "UTF-8", 200, "OK", GetHeaders(contentType),
+                        contentStream);
                 }
             }
             else
@@ -92,13 +95,29 @@ namespace HybridWebView
             }
         }
 
+        private Stream? GetAssetStreamAsync(string assetPath)
+        {
+            var x = FileSystem.AppDataDirectory;
+            //if (!FileSystem.AppPackageFileExistsAsync(assetPath).GetAwaiter().GetResult())
+            //{
+            //    return null;
+            //}
+            return FileSystem.OpenAppPackageFileAsync(assetPath).GetAwaiter().GetResult();
+        }
+
         private Stream? PlatformOpenAppPackageFile(string filename)
         {
             filename = PathUtils.NormalizePath(filename);
 
             try
             {
-                return _handler.Context.Assets?.Open(filename);
+                //var files = Platform.AppContext?.Assets;
+                if (filename.Contains("favicon.ico")) return null;
+                var stearm = FileSystem.OpenAppPackageFileAsync($"{filename}").GetAwaiter()
+                    .GetResult(); //power-bi/Index.html
+                return stearm;
+
+                // return _handler.Context.Assets?.Open(filename);
             }
             catch (Java.IO.FileNotFoundException)
             {
@@ -107,7 +126,8 @@ namespace HybridWebView
         }
 
         private protected static IDictionary<string, string> GetHeaders(string contentType) =>
-            new Dictionary<string, string> {
+            new Dictionary<string, string>
+            {
                 { "Content-Type", contentType },
             };
     }

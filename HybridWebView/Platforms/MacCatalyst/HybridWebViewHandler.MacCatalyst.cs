@@ -1,4 +1,5 @@
 ﻿using Foundation;
+using Microsoft.Maui.Handlers;
 using Microsoft.Maui.Platform;
 using System.Drawing;
 using System.Globalization;
@@ -9,15 +10,25 @@ namespace HybridWebView
 {
     partial class HybridWebViewHandler
     {
+        WKUIDelegate? _delegate;
+
+        public static void MapWKUIDelegate2(IWebViewHandler handler, IWebView webView)
+        {
+            if (handler is HybridWebViewHandler platformHandler)
+                handler.PlatformView.UIDelegate = platformHandler._delegate ??= new MauiWebViewUIDelegate2(handler);
+        }
+
         protected override WKWebView CreatePlatformView()
         {
             var config = new WKWebViewConfiguration();
-            config.UserContentController.AddScriptMessageHandler(new WebViewScriptMessageHandler(MessageReceived), "webwindowinterop");
+            config.UserContentController.AddScriptMessageHandler(new WebViewScriptMessageHandler(MessageReceived),
+                "webwindowinterop");
             config.SetUrlSchemeHandler(new SchemeHandler(this), urlScheme: "app");
 
             // Legacy Developer Extras setting.
             var enableWebDevTools = ((HybridWebView)VirtualView).EnableWebDevTools;
-            config.Preferences.SetValueForKey(NSObject.FromObject(enableWebDevTools), new NSString("developerExtrasEnabled"));
+            config.Preferences.SetValueForKey(NSObject.FromObject(enableWebDevTools),
+                new NSString("developerExtrasEnabled"));
 
             var platformView = new MauiWKWebView(RectangleF.Empty, this, config);
 
@@ -27,6 +38,7 @@ namespace HybridWebView
                 // Enable Developer Extras for Catalyst/iOS builds for 16.4+
                 platformView.SetValueForKey(NSObject.FromObject(enableWebDevTools), new NSString("inspectable"));
             }
+
 
             return platformView;
         }
@@ -42,7 +54,8 @@ namespace HybridWebView
 
             public WebViewScriptMessageHandler(Action<Uri, string> messageReceivedAction)
             {
-                _messageReceivedAction = messageReceivedAction ?? throw new ArgumentNullException(nameof(messageReceivedAction));
+                _messageReceivedAction = messageReceivedAction ??
+                                         throw new ArgumentNullException(nameof(messageReceivedAction));
             }
 
             public void DidReceiveScriptMessage(WKUserContentController userContentController, WKScriptMessage message)
@@ -51,6 +64,7 @@ namespace HybridWebView
                 {
                     throw new ArgumentNullException(nameof(message));
                 }
+
                 _messageReceivedAction(HybridWebView.AppOriginUri, ((NSString)message.Body).ToString());
             }
         }
@@ -76,13 +90,15 @@ namespace HybridWebView
                 {
                     using (var dic = new NSMutableDictionary<NSString, NSString>())
                     {
-                        dic.Add((NSString)"Content-Length", (NSString)(responseData.ResponseBytes.Length.ToString(CultureInfo.InvariantCulture)));
+                        dic.Add((NSString)"Content-Length",
+                            (NSString)(responseData.ResponseBytes.Length.ToString(CultureInfo.InvariantCulture)));
                         dic.Add((NSString)"Content-Type", (NSString)responseData.ContentType);
                         // Disable local caching. This will prevent user scripts from executing correctly.
                         dic.Add((NSString)"Cache-Control", (NSString)"no-cache, max-age=0, must-revalidate, no-store");
                         if (urlSchemeTask.Request.Url != null)
                         {
-                            using var response = new NSHttpUrlResponse(urlSchemeTask.Request.Url, responseData.StatusCode, "HTTP/1.1", dic);
+                            using var response = new NSHttpUrlResponse(urlSchemeTask.Request.Url,
+                                responseData.StatusCode, "HTTP/1.1", dic);
                             urlSchemeTask.DidReceiveResponse(response);
                         }
                     }

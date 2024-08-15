@@ -14,6 +14,7 @@ namespace HybridWebView
 
         private partial Task InitializeHybridWebView()
         {
+            PlatformWebView.Configuration.Preferences.JavaScriptCanOpenWindowsAutomatically = true;
             return Task.CompletedTask;
         }
 

@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
+using System.Text;
 using System.Text.Json;
 
 namespace HybridWebView
@@ -7,11 +9,56 @@ namespace HybridWebView
     {
         internal const string ProxyRequestPath = "proxy";
 
+
+        public static readonly BindableProperty MainFileProperty =
+            BindableProperty.Create(nameof(MainFile), typeof(string), typeof(HybridWebView), null);
+
+
         /// <summary>
         /// Specifies the file within the <see cref="HybridAssetRoot"/> that should be served as the main file. The
         /// default value is <c>index.html</c>.
         /// </summary>
-        public string? MainFile { get; set; } = "index.html";
+        public string MainFile
+        {
+            get => (string)GetValue(MainFileProperty);
+            set { SetValue(MainFileProperty, value); }
+        }
+
+        public static readonly BindableProperty LoadNewProjectProperty =
+            BindableProperty.Create(nameof(LoadNewProject), typeof(bool), typeof(HybridWebView), false,
+                propertyChanged: OnLoadNewProjectChanged
+            );
+
+        static void OnLoadNewProjectChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var val = (bool)newValue;
+            if (val)
+            {
+                HybridWebView hybridWebView = bindable as HybridWebView;
+                if (hybridWebView != null)
+                {
+                    hybridWebView.Navigate(hybridWebView.MainFile);
+                }
+            }
+            // Property changed implementation goes here
+        }
+
+        /// <summary>
+        /// Specifies the file within the <see cref="HybridAssetRoot"/> that should be served as the main file. The
+        /// default value is <c>index.html</c>.
+        /// </summary>
+        public bool LoadNewProject
+        {
+            get => (bool)GetValue(LoadNewProjectProperty);
+            set
+            {
+                SetValue(MainFileProperty, value);
+                if (value)
+                    Navigate(MainFile);
+            }
+        }
+
+        // public string? MainFile { get; set; } = "index.html";
 
         /// <summary>
         /// Gets or sets the path for initial navigation after the content is finished loading. The default value is <c>/</c>.
@@ -50,6 +97,7 @@ namespace HybridWebView
         /// </summary>
         public event EventHandler<HybridWebViewInitializedEventArgs>? HybridWebViewInitialized;
 
+        public event EventHandler<HybridWebViewNavigateCompletedEventArgs>? NavigationCompleted;
 
         public void Navigate(string url)
         {
@@ -76,6 +124,7 @@ namespace HybridWebView
             });
 
             Navigate(StartPath);
+            NavigationCompleted?.Invoke(this, new HybridWebViewNavigateCompletedEventArgs(StartPath));
         }
 
         private partial Task InitializeHybridWebView();
@@ -103,7 +152,8 @@ namespace HybridWebView
                 throw new ArgumentException($"The method name cannot be null or empty.", nameof(methodName));
             }
 
-            return await EvaluateJavaScriptAsync($"{methodName}({(paramValues == null ? string.Empty : string.Join(", ", paramValues.Select(v => JsonSerializer.Serialize(v))))})");
+            return await EvaluateJavaScriptAsync(
+                $"{methodName}({(paramValues == null ? string.Empty : string.Join(", ", paramValues.Select(v => JsonSerializer.Serialize(v))))})");
         }
 
         /// <summary>
@@ -122,6 +172,7 @@ namespace HybridWebView
             {
                 return default;
             }
+
             return JsonSerializer.Deserialize<TReturnType>(stringResult);
         }
 
@@ -131,21 +182,25 @@ namespace HybridWebView
             switch (messageData?.MessageType)
             {
                 case 0: // "raw" message (just a string)
-                    RawMessageReceived?.Invoke(this, new HybridWebViewRawMessageReceivedEventArgs(messageData.MessageContent));
+                    RawMessageReceived?.Invoke(this,
+                        new HybridWebViewRawMessageReceivedEventArgs(messageData.MessageContent));
                     break;
                 case 1: // "invoke" message
                     if (messageData.MessageContent == null)
                     {
-                        throw new InvalidOperationException($"Expected invoke message to contain MessageContent, but it was null.");
+                        throw new InvalidOperationException(
+                            $"Expected invoke message to contain MessageContent, but it was null.");
                     }
+
                     var invokeData = JsonSerializer.Deserialize<JSInvokeMethodData>(messageData.MessageContent)!;
                     InvokeDotNetMethod(invokeData);
                     break;
                 default:
-                    throw new InvalidOperationException($"Unknown message type: {messageData?.MessageType}. Message contents: {messageData?.MessageContent}");
+                    throw new InvalidOperationException(
+                        $"Unknown message type: {messageData?.MessageType}. Message contents: {messageData?.MessageContent}");
             }
-
         }
+
 
         /// <summary>
         /// Handle the proxy request message.
@@ -190,7 +245,11 @@ namespace HybridWebView
                                         Result = result,
                                     };
                                 }
-                                args.ResponseStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(dotNetInvokeResult)));
+
+                                args.ResponseStream =
+                                    new MemoryStream(
+                                        Encoding.UTF8.GetBytes(
+                                            JsonSerializer.Serialize(dotNetInvokeResult)));
                             }
                         }
                     }
@@ -210,23 +269,29 @@ namespace HybridWebView
         {
             if (JSInvokeTarget is null)
             {
-                throw new NotImplementedException($"The {nameof(JSInvokeTarget)} property must have a value in order to invoke a .NET method from JavaScript.");
+                throw new NotImplementedException(
+                    $"The {nameof(JSInvokeTarget)} property must have a value in order to invoke a .NET method from JavaScript.");
             }
 
-            var invokeMethod = JSInvokeTarget.GetType().GetMethod(invokeData.MethodName!, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.InvokeMethod);
+            var invokeMethod = JSInvokeTarget.GetType().GetMethod(invokeData.MethodName!,
+                BindingFlags.Public | BindingFlags.Static |
+                BindingFlags.Instance | BindingFlags.InvokeMethod);
             if (invokeMethod == null)
             {
-                throw new InvalidOperationException($"The method {invokeData.MethodName} couldn't be found on the {nameof(JSInvokeTarget)} of type {JSInvokeTarget.GetType().FullName}.");
+                throw new InvalidOperationException(
+                    $"The method {invokeData.MethodName} couldn't be found on the {nameof(JSInvokeTarget)} of type {JSInvokeTarget.GetType().FullName}.");
             }
 
             if (invokeData.ParamValues != null && invokeMethod.GetParameters().Length != invokeData.ParamValues.Length)
             {
-                throw new InvalidOperationException($"The number of parameters on {nameof(JSInvokeTarget)}'s method {invokeData.MethodName} ({invokeMethod.GetParameters().Length}) doesn't match the number of values passed from JavaScript code ({invokeData.ParamValues.Length}).");
+                throw new InvalidOperationException(
+                    $"The number of parameters on {nameof(JSInvokeTarget)}'s method {invokeData.MethodName} ({invokeMethod.GetParameters().Length}) doesn't match the number of values passed from JavaScript code ({invokeData.ParamValues.Length}).");
             }
 
             var paramObjectValues =
                 invokeData.ParamValues?
-                    .Zip(invokeMethod.GetParameters(), (s, p) => s == null ? null : JsonSerializer.Deserialize(s, p.ParameterType))
+                    .Zip(invokeMethod.GetParameters(),
+                        (s, p) => s == null ? null : JsonSerializer.Deserialize(s, p.ParameterType))
                     .ToArray();
 
             return invokeMethod.Invoke(JSInvokeTarget, paramObjectValues);
@@ -260,6 +325,7 @@ namespace HybridWebView
             {
                 return null;
             }
+
             using var reader = new StreamReader(stream);
 
             var contents = reader.ReadToEnd();
@@ -273,6 +339,7 @@ namespace HybridWebView
             {
                 return null;
             }
+
             return await FileSystem.OpenAppPackageFileAsync(assetPath);
         }
     }

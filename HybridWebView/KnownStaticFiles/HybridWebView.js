@@ -31,7 +31,7 @@ window.HybridWebView = {
     },
 
     /**
-     * Asynchronously invoke .NET method and get a result. 
+     * Asynchronously invoke .NET method and get a result.
      * Leverages the proxy to send the message to .NET.
      * @param {string} methodName Name of .NET method to invoke.
      * @param {any[]} paramValues Parameters to pass to the method.
@@ -83,7 +83,7 @@ window.HybridWebView = {
     },
 
     /**
-     * Sends a message to .NET using the built in 
+     * Sends a message to .NET using the built in
      * @private
      * @param {number} messageType The type of message to send.
      * @param {string} messageContent The message content.
