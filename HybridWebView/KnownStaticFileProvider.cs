@@ -16,6 +16,7 @@ namespace HybridWebView
             {
                 return null;
             }
+
             var resourceName = resourceRelativeUrl.Substring(KnownStaticFilePrefix.Length);
 
             if (!KnownStaticFilesNames.Contains(resourceName))

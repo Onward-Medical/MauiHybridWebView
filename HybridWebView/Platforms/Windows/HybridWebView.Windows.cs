@@ -30,7 +30,11 @@ namespace HybridWebView
             _coreWebView2Environment = await CoreWebView2Environment.CreateAsync();
 
             await PlatformWebView.EnsureCoreWebView2Async();
-
+            PlatformWebView.CoreWebView2.ServerCertificateErrorDetected += (sender, e) =>
+            {
+                CoreWebView2Certificate certificate = e.ServerCertificate;
+                e.Action = CoreWebView2ServerCertificateErrorAction.AlwaysAllow;
+            };
             PlatformWebView.CoreWebView2.Settings.AreDevToolsEnabled = EnableWebDevTools;
             PlatformWebView.CoreWebView2.Settings.IsWebMessageEnabled = true;
             PlatformWebView.CoreWebView2.AddWebResourceRequestedFilter($"{AppOrigin}*", CoreWebView2WebResourceContext.All);

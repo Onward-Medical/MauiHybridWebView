@@ -3,6 +3,7 @@ using Microsoft.Web.WebView2.Core;
 using WebView2Control = Microsoft.UI.Xaml.Controls.WebView2;
 #elif ANDROID
 using AWebView = Android.Webkit.WebView;
+
 #elif IOS || MACCATALYST
 using WebKit;
 #elif TIZEN
@@ -23,10 +24,10 @@ namespace HybridWebView
 		/// </summary>
 		public WebView2Control WebView { get; internal set; }
 #elif ANDROID
-		/// <summary>
-		/// Gets the <see cref="AWebView"/> instance that was initialized.
-		/// </summary>
-		public AWebView WebView { get; internal set; }
+        /// <summary>
+        /// Gets the <see cref="AWebView"/> instance that was initialized.
+        /// </summary>
+        public AWebView WebView { get; internal set; }
 #elif MACCATALYST || IOS
 		/// <summary>
 		/// Gets the <see cref="WKWebView"/> instance that was initialized.

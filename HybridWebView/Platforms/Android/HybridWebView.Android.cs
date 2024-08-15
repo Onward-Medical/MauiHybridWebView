@@ -23,10 +23,13 @@ namespace HybridWebView
         {
             // Note that this is a per-app setting and not per-control, so if you enable
             // this, it is enabled for all Android WebViews in the app.
-            AWebView.SetWebContentsDebuggingEnabled(enabled: EnableWebDevTools);
+            AWebView.SetWebContentsDebuggingEnabled(enabled: true);
 
             PlatformWebView.Settings.JavaScriptEnabled = true;
-
+            PlatformWebView.Settings.AllowFileAccess = true;
+            PlatformWebView.Settings.AllowFileAccessFromFileURLs = true;
+            PlatformWebView.Settings.AllowUniversalAccessFromFileURLs = true;
+            PlatformWebView.Settings.AllowContentAccess = true;
             _javaScriptInterface = new HybridWebViewJavaScriptInterface(this);
             PlatformWebView.AddJavascriptInterface(_javaScriptInterface, "hybridWebViewHost");
 
