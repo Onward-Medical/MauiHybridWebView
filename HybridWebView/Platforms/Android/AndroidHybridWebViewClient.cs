@@ -60,16 +60,16 @@ namespace HybridWebView
                         contentStream = args.ResponseStream;
                     }
                 }
-
-                if (contentStream == null)
+                else
                 {
-                    contentStream = KnownStaticFileProvider.GetKnownResourceStream(relativePath!);
-                }
+                    contentStream = KnownStaticFileProvider.GetKnownResourceStream(relativePath);
 
-                if (contentStream is null)
-                {
-                    var assetPath = Path.Combine(((HybridWebView)_handler.VirtualView).HybridAssetRoot!, relativePath!);
-                    contentStream = PlatformOpenAppPackageFile(assetPath); // GetAssetStreamAsync(assetPath);//
+                    if (contentStream is null)
+                    {
+                        var assetPath = Path.Combine(((HybridWebView)_handler.VirtualView).HybridAssetRoot!,
+                            relativePath);
+                        contentStream = PlatformOpenAppPackageFile(assetPath);
+                    }
                 }
 
                 if (contentStream is null)
